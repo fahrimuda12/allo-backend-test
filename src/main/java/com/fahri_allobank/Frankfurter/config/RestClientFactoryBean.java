@@ -4,14 +4,6 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
-import java.time.Duration;
-
-/**
- * Custom FactoryBean implementation for creating RestClient instances.
- * This approach provides better control over client configuration and lifecycle
- * compared to simple @Bean methods, allowing for lazy initialization and
- * centralized configuration management.
- */
 @Component
 public class RestClientFactoryBean implements FactoryBean<RestClient> {
 
