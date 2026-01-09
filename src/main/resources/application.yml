@@ -2,6 +2,9 @@ spring:
   application:
     name: Frankfurter
 
+server:
+  port: 8080
+
 frankfurter:
   api:
     base-url: https://api.frankfurter.app
