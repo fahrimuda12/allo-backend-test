@@ -1,4 +1,4 @@
-package com.fahri_allobank.util;
+package com.fahri_allobank.Frankfurter.util;
 
 import org.junit.jupiter.api.Test;
 

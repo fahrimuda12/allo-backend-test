@@ -1,139 +1,520 @@
-# Allo Bank Backend Developer Take-Home Test
+# Frankfurter IDR Rate Aggregator
+
+A production-ready Spring Boot REST API that aggregates Indonesian Rupiah (IDR) exchange rate data from the Frankfurter API, demonstrating advanced architectural patterns and clean code practices.
+
+## 📋 Table of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Architecture](#architecture)
+- [Prerequisites](#prerequisites)
+- [Setup and Installation](#setup-and-installation)
+- [Running the Application](#running-the-application)
+- [API Endpoints](#api-endpoints)
+- [Testing](#testing)
+- [Personalization Details](#personalization-details)
+- [Architectural Rationale](#architectural-rationale)
+
+## 🎯 Overview
+
+This application provides a single polymorphic REST API endpoint that serves three different types of financial data related to Indonesian Rupiah (IDR):
+
+1. **Latest IDR Exchange Rates** - Current exchange rates with IDR as base currency, including a calculated USD buy spread
+2. **Historical IDR to USD Rates** - Time series data for IDR to USD conversion (2024-01-01 to 2024-01-05)
+3. **Supported Currencies** - Complete list of all currencies supported by the Frankfurter API
+
+## ✨ Features
+
+- **Strategy Pattern Implementation** - Polymorphic handling of multiple resource types without conditional logic
+- **Custom FactoryBean** - Centralized RestClient configuration and lifecycle management
+- **Startup Data Loading** - All data fetched once at application startup via ApplicationRunner
+- **Thread-Safe In-Memory Store** - Immutable, concurrent-safe data storage
+- **Unique Spread Calculation** - Personalized USD buy spread based on GitHub username
+- **Comprehensive Error Handling** - Graceful handling of network failures and invalid requests
+- **Production-Ready Testing** - Unit and integration tests with high coverage
+- **Clean Architecture** - Clear separation of concerns across layers
+
+## 🏗️ Architecture
+
+### Technology Stack
+
+- **Java 25**
+- **Spring Boot 4.0.1**
+- **Maven** - Build and dependency management
+- **Lombok** - Boilerplate code reduction
+- **JUnit 5 & Mockito** - Testing framework
+
+### Project Structure
+
+```
+src/
+├── main/
+│   ├── java/com/fahri_allobank/Frankfurter/
+│   │   ├── config/              # Configuration classes
+│   │   │   ├── FrankfurterApiProperties.java
+│   │   │   └── RestClientFactoryBean.java
+│   │   ├── controller/          # REST controllers
+│   │   │   └── FinanceController.java
+│   │   ├── model/               # DTOs
+│   │   │   ├── LatestRatesResponse.java
+│   │   │   ├── HistoricalRatesResponse.java
+│   │   │   └── SupportedCurrenciesResponse.java
+│   │   ├── runner/              # Startup runners
+│   │   │   └── DataInitializationRunner.java
+│   │   ├── service/             # Business logic
+│   │   │   ├── FinanceDataService.java
+│   │   │   └── FinanceDataStore.java
+│   │   ├── strategy/            # Strategy pattern implementations
+│   │   │   ├── IDRDataFetcher.java
+│   │   │   ├── LatestIDRRatesFetcher.java
+│   │   │   ├── HistoricalIDRUSDFetcher.java
+│   │   │   └── SupportedCurrenciesFetcher.java
+│   │   ├── util/                # Utility classes
+│   │   │   └── SpreadCalculator.java
+│   │   └── FrankfurterApplication.java
+│   └── resources/
+│       └── application.yml      # Application configuration
+└── test/                        # Unit and integration tests
+```
+
+## 📦 Prerequisites
+
+- **Java 25** or higher
+- **Maven 3.6+**
+- Internet connection (for fetching data from Frankfurter API)
+
+## 🚀 Setup and Installation
+
+### 1. Clone the Repository
+
+```bash
+git clone <repository-url>
+cd Frankfurter
+```
+
+### 2. Build the Project
+
+```bash
+./mvnw clean install
+```
+
+This will:
 
-Thank you for applying to our team! This take-home test is designed to evaluate your practical skills in building **production-ready** Spring Boot applications within a finance domain, focusing on architectural patterns and complex data handling.
+- Download all dependencies
+- Compile the source code
+- Run all tests
+- Package the application
 
-## 📝 Objective
+## ▶️ Running the Application
 
-Your task is to create a single Spring Boot REST API endpoint capable of aggregating data from multiple, distinct resources provided by the public, keyless **Frankfurter Exchange Rate API**. The primary focus is on handling Indonesian Rupiah (IDR) data.
+### Using Maven
 
-The focus of this test is not just functional correctness, but demonstrating clean code, advanced Spring concepts, thread-safe design, and architectural clarity.
+```bash
+./mvnw spring-boot:run
+```
 
-## I. Core Task: The Polymorphic API
+### Using Java
 
-### 1. External API Integration (Frankfurter API)
+```bash
+java -jar target/Frankfurter-0.0.1-SNAPSHOT.jar
+```
 
-* **Base URL (Public):** `https://api.frankfurter.app/`.
+The application will start on **port 8080** by default.
 
-* You must integrate with three distinct data resources to enforce the architectural pattern:
+### Startup Behavior
 
-   1.  `/latest?base=IDR` (The latest rates relative to IDR)
+On startup, the application will:
 
-   2.  **Historical Data:** Query a specific, small time series (e.g., `/2024-01-01..2024-01-05?from=IDR&to=USD`). **Note:** *Use the date range provided in this example unless a different range is communicated separately.*
+1. Initialize the RestClient via FactoryBean
+2. Execute the ApplicationRunner to fetch all data from Frankfurter API
+3. Store the data in the thread-safe, immutable in-memory store
+4. Mark the application as ready to serve requests
 
-   3.  `/currencies` (The list of all supported currency symbols)
+You should see log messages indicating successful data initialization:
+
+```
+INFO - Starting data initialization from Frankfurter API...
+INFO - Fetching data for resource type: latest_idr_rates
+INFO - Successfully stored data for resource type: latest_idr_rates
+INFO - Fetching data for resource type: historical_idr_usd
+INFO - Successfully stored data for resource type: historical_idr_usd
+INFO - Fetching data for resource type: supported_currencies
+INFO - Successfully stored data for resource type: supported_currencies
+INFO - Data initialization completed successfully. Store is now immutable.
+```
+
+## 🔌 API Endpoints
+
+### Base URL
+
+```
+http://localhost:8080/api/finance
+```
+
+### Endpoint
+
+```
+GET /api/finance/data/{resourceType}
+```
+
+### Supported Resource Types
+
+#### 1. Latest IDR Rates
+
+**Request:**
+
+```bash
+curl -X GET http://localhost:8080/api/finance/data/latest_idr_rates
+```
+
+**Response:**
+
+```json
+{
+  "amount": 1.0,
+  "base": "IDR",
+  "date": "2024-01-09",
+  "rates": {
+    "USD": 0.000063,
+    "EUR": 0.000058,
+    "GBP": 0.00005,
+    ...
+  },
+  "USD_BuySpread_IDR": 15873.015873
+}
+```
+
+#### 2. Historical IDR to USD Rates
+
+**Request:**
+
+```bash
+curl -X GET http://localhost:8080/api/finance/data/historical_idr_usd
+```
+
+**Response:**
+
+```json
+{
+  "amount": 1.0,
+  "base": "IDR",
+  "start_date": "2024-01-01",
+  "end_date": "2024-01-05",
+  "rates": {
+    "2024-01-01": {
+      "USD": 0.000064
+    },
+    "2024-01-02": {
+      "USD": 0.000063
+    },
+    ...
+  }
+}
+```
+
+#### 3. Supported Currencies
+
+**Request:**
+
+```bash
+curl -X GET http://localhost:8080/api/finance/data/supported_currencies
+```
+
+**Response:**
+
+```json
+{
+  "currencies": {
+    "AUD": "Australian Dollar",
+    "BGN": "Bulgarian Lev",
+    "BRL": "Brazilian Real",
+    "CAD": "Canadian Dollar",
+    "CHF": "Swiss Franc",
+    "CNY": "Chinese Renminbi Yuan",
+    "CZK": "Czech Koruna",
+    "DKK": "Danish Krone",
+    "EUR": "Euro",
+    "GBP": "British Pound",
+    "HKD": "Hong Kong Dollar",
+    "HUF": "Hungarian Forint",
+    "IDR": "Indonesian Rupiah",
+    "ILS": "Israeli New Sheqel",
+    "INR": "Indian Rupee",
+    "ISK": "Icelandic Króna",
+    "JPY": "Japanese Yen",
+    "KRW": "South Korean Won",
+    "MXN": "Mexican Peso",
+    "MYR": "Malaysian Ringgit",
+    "NOK": "Norwegian Krone",
+    "NZD": "New Zealand Dollar",
+    "PHP": "Philippine Peso",
+    "PLN": "Polish Złoty",
+    "RON": "Romanian Leu",
+    "SEK": "Swedish Krona",
+    "SGD": "Singapore Dollar",
+    "THB": "Thai Baht",
+    "TRY": "Turkish Lira",
+    "USD": "United States Dollar",
+    "ZAR": "South African Rand"
+  }
+}
+```
 
-### 2. Internal API Endpoint
+#### Error Response
 
-You must expose **one single endpoint** in your application: ```GET /api/finance/data/{resourceType}```
+**Request:**
 
-Where `{resourceType}` can be one of the three strings: `latest_idr_rates`, `historical_idr_usd`, or `supported_currencies`.
+```bash
+curl -X GET http://localhost:8080/api/finance/data/invalid_resource
+```
 
-### 3. Required Functionality & Business Logic
+**Response (400 Bad Request):**
 
-* **Resource Handling:** Your service must correctly map the three incoming `resourceType` values to the correct data fetching strategies.
+```json
+{
+  "error": "Invalid resource type: invalid_resource"
+}
+```
 
-* **Data Load:** All three resources should be fetched from the external API.
+## 🧪 Testing
 
-* **Data Transformation (Latest IDR Rates only) - Unique Calculation:** For the **`latest_idr_rates`** resource, you must calculate and include a new field, `"USD_BuySpread_IDR"`. This is the Rupiah selling rate to USD after applying a banking spread/margin.
+### Run All Tests
 
-  **The Spread Factor Must Be Unique :**
+```bash
+./mvnw test
+```
 
-   1.  **Input:** Your GitHub username (e.g., `johndoe47`).
-   2.  **Calculation:** Calculate the sum of the Unicode (ASCII) values of all characters in your lowercase GitHub username string.
-   3.  **Spread Factor Derivation:** `Spread Factor = (Sum of Unicode Values % 1000) / 100000.0`
-       *(This will yield a unique factor between 0.00000 and 0.00999, ensuring a personalized result.)*
+### Run Specific Test Class
 
-  **Final Formula:** `USD_BuySpread_IDR = (1 / Rate_USD) * (1 + Spread Factor)` (where `Rate_USD` is the value from the API when `base=IDR`).
+```bash
+./mvnw test -Dtest=LatestIDRRatesFetcherTest
+```
 
-* **Other Resources:** The `historical_idr_usd` and `supported_currencies` resources can return their data with minimal transformation, but the final output must be a unified JSON array of results.
+### Test Coverage
 
-## II. Architectural Constraints
+The project includes:
 
-Meeting the core task is only one part of the solution. The following constraints must be strictly adhered to and will be heavily weighted during evaluation:
+- **Unit Tests** for all strategy implementations
 
-### Constraint A: The Strategy Pattern
+  - `LatestIDRRatesFetcherTest` - Tests latest rates fetching and spread calculation
+  - `HistoricalIDRUSDFetcherTest` - Tests historical data fetching
+  - `SupportedCurrenciesFetcherTest` - Tests currency list fetching
+  - `SpreadCalculatorTest` - Tests spread factor calculation logic
 
-The logic for handling the three different resources (`latest_idr_rates`, `historical_idr_usd`, `supported_currencies`) must be implemented using the **Strategy Design Pattern**.
+- **Integration Tests**
+  - `DataInitializationRunnerIntegrationTest` - Verifies startup data loading
+  - `FinanceControllerIntegrationTest` - End-to-end API testing
 
-1.  Define a clear **Strategy Interface** (e.g., `IDRDataFetcher`).
+## 🔐 Personalization Details
 
-2.  Implement **three concrete strategy classes** (one for each resource).
+### GitHub Username
 
-3.  The main `Controller` should dynamically select the correct strategy implementation using a map-based lookup injected by Spring, avoiding any manual `if/else` or `switch` logic in the controller layer.
+```
+fahri-allobank
+```
 
-### Constraint B: Client Factory Bean
+### Spread Factor Calculation
 
-The instance of your chosen external API client (`WebClient` or `RestTemplate`) **must be defined and created within a custom implementation of Spring's `FactoryBean<T>` interface**.
+The spread factor is calculated using the following algorithm:
 
-* This `FactoryBean` should be responsible for externalizing the API Base URL via `@Value` or `@ConfigurationProperties` and applying any initial configuration (e.g., timeouts, shared headers).
+1. Convert GitHub username to lowercase: `"fahri-allobank"`
+2. Calculate sum of Unicode values of all characters:
+   - f(102) + a(97) + h(104) + r(114) + i(105) + -(45) + a(97) + l(108) + l(108) + o(111) + b(98) + a(97) + n(110) + k(107) = 1403
+3. Apply formula: `(1403 % 1000) / 100000.0 = 403 / 100000.0 = 0.00403`
 
-* ***You may not define the client as a simple `@Bean` in a `@Configuration` class.***
+### Calculated Spread Factor
 
-### Constraint C: Startup Data Runner & Immutability
+```
+0.00403
+```
 
-The aggregated data for **ALL three resources** must be fetched **exactly once on application startup** and loaded into an in-memory store.
+### USD Buy Spread Formula
 
-1.  Use a Spring Boot **`ApplicationRunner`** or **`CommandLineRunner`** component to initiate the data fetching process.
+```
+USD_BuySpread_IDR = (1 / Rate_USD) * (1 + Spread Factor)
+```
 
-2.  The API endpoint (`GET /api/finance/data/{resourceType}`) must serve the data from this **in-memory store**, not by making a new call to the external API on every request.
+**Example Calculation:**
 
-3.  The in-memory storage mechanism (e.g., a service holding the data) must be designed to be **thread-safe** and ensure the data is **immutable** once the `ApplicationRunner` has finished loading it.
+- If `Rate_USD = 0.000063` (from API when base=IDR)
+- `USD_BuySpread_IDR = (1 / 0.000063) * (1 + 0.00403)`
+- `USD_BuySpread_IDR = 15873.015873 * 1.00403`
+- `USD_BuySpread_IDR ≈ 15937.01`
 
-## III. Production Readiness & Deliverables
+This represents the Rupiah selling rate to USD after applying the banking spread/margin.
 
-Your final solution must demonstrate production quality through code, testing, and communication.
+---
 
-### 1. Robustness & Best Practices
+## 🛠️ Architectural Rationale
 
-* Graceful **Error Handling** for network failures or 4xx/5xx responses from the external API.
+### 1. Polymorphism Justification: Why Strategy Pattern?
 
-* Proper use of **Configuration Properties** (e.g., `application.yml`) for external service URLs.
+**Question:** Why use the Strategy Pattern over a simpler conditional block in the service layer for handling the multi-resource endpoint?
 
-* Clear separation of concerns (Controller, Service, Model/DTO, etc.).
+**Answer:**
 
-### 2. Testing
+The Strategy Pattern was chosen over simple `if/else` or `switch` statements for several compelling reasons:
 
-* **Unit Tests** for all three `IDRDataFetcher` strategy implementations, ensuring data calculation and transformation logic is covered (using mock clients for external calls).
+#### Extensibility
 
-* **Integration Tests** to verify the `ApplicationRunner` successfully initializes and loads the data into the in-memory store before the application context is ready.
+- **Open/Closed Principle**: Adding a new resource type requires only creating a new strategy class that implements `IDRDataFetcher`. No existing code needs to be modified.
+- **Example**: If we need to add a "weekly_idr_summary" resource, we simply create `WeeklyIDRSummaryFetcher` without touching the controller, service, or other strategies.
+- **Contrast**: With conditional logic, every new resource type requires modifying the service layer's switch/if-else block, increasing the risk of bugs and violating the Open/Closed Principle.
 
-### 3. Documentation
+#### Maintainability
 
-A clear `README.md` is mandatory. It must include:
+- **Single Responsibility**: Each strategy class has one clear responsibility - fetching and transforming data for its specific resource type.
+- **Isolation**: Changes to one resource type's logic (e.g., modifying the spread calculation for latest rates) are isolated to that strategy class.
+- **Testability**: Each strategy can be unit tested independently with mocked dependencies, making tests simpler and more focused.
+- **Code Organization**: Related logic is grouped together in cohesive classes rather than scattered across a large conditional block.
 
-* **Setup/Run Instructions:** Clear steps to clone, build, and run the application and tests.
+#### Dependency Injection Benefits
 
-* **Endpoint Usage:** Example cURL commands to test the three different resource types.
+- **Spring Integration**: Spring automatically discovers all `IDRDataFetcher` implementations and injects them as a `List<IDRDataFetcher>`, enabling automatic strategy registration.
+- **Map-Based Lookup**: The service layer uses a map (`resourceType -> strategy`) for O(1) lookup, which is more efficient than sequential conditional checks.
+- **No Manual Registration**: New strategies are automatically available without manual registration code.
 
-* **Personalization Note:** Clearly state your GitHub username and show the exact **Spread Factor** (e.g., `0.00765`) calculated by your function.
+#### Real-World Scalability
 
-* ---
+- In a production environment, different resource types might require different:
+  - Caching strategies
+  - Rate limiting rules
+  - Data transformation logic
+  - Error handling approaches
+- The Strategy Pattern allows each implementation to handle these concerns independently.
 
-* ### 🛠️ Architectural Rationale
+### 2. Client Factory: Why FactoryBean?
 
-  This section should contain a brief, but detailed, explanation answering the following questions:
+**Question:** Explain the specific role and benefit of using a `FactoryBean` to construct the external API client. Why is this preferable to defining the client using a standard `@Bean` method?
 
-   1.  **Polymorphism Justification:** Explain *why* the Strategy Pattern was used over a simpler conditional block in the service layer for handling the multi-resource endpoint. Discuss the benefits in terms of **extensibility** and **maintainability**.
+**Answer:**
 
-   2.  **Client Factory:** Explain the specific role and benefit of using a **`FactoryBean`** to construct the external API client. Why is this preferable to defining the client using a standard `@Bean` method in this scenario?
+The `FactoryBean<RestClient>` approach provides several advantages over a simple `@Bean` method:
 
-   3.  **Startup Runner Choice:** Justify the choice of using an `ApplicationRunner` (or `CommandLineRunner`) for the initial data ingestion over a simpler `@PostConstruct` method.
+#### Lifecycle Control
 
-## IV. Submission & Review Process
+- **Lazy Initialization**: FactoryBean allows for lazy initialization of the RestClient. The client is only created when first requested, not during application startup.
+- **Custom Initialization Logic**: Complex initialization logic can be encapsulated within the factory, keeping configuration classes clean.
+- **Singleton Control**: The `isSingleton()` method explicitly controls whether the factory produces a singleton or prototype bean.
 
-1.  **Fork** this repository.
+#### Separation of Concerns
 
-2.  Implement your solution on a dedicated feature branch (e.g., `feat/idr-rate-aggregator`).
+- **Configuration Abstraction**: The FactoryBean abstracts the complexity of RestClient creation from the rest of the application.
+- **Centralized Configuration**: All client configuration (base URL, timeouts, headers, interceptors) is centralized in one place.
+- **Type Safety**: The `getObjectType()` method provides explicit type information for dependency injection.
 
-3.  When complete, submit your solution via a **Pull Request (PR)** back to the main repository.
-4.  Please complete the form to submit your technical test: [Click Here](https://forms.gle/nZKQ2EjTCPfAKHog7)
+#### Flexibility and Extensibility
 
-**Your PR will be evaluated on the following:**
+- **Easy Mocking**: In tests, the entire FactoryBean can be mocked or replaced with a test implementation.
+- **Runtime Configuration**: The factory can make decisions about client configuration at runtime based on environment variables or profiles.
+- **Multiple Clients**: If we need multiple RestClient instances with different configurations, we can create multiple FactoryBean implementations.
 
-* **Commit History:** Clean, atomic, and descriptive commit messages (e.g., "feat: Implement IDR latest rates strategy," "fix: Correctly calculate IDR spread in tests").
+#### Production Benefits
 
-* **PR Description:** The description must clearly summarize the solution and **must contain the full answers** to the three "Architectural Rationale" questions from Section III.
+- **Connection Pooling**: The factory can configure connection pooling, retry logic, and circuit breakers in one place.
+- **Monitoring**: Interceptors for logging, metrics, and tracing can be added centrally.
+- **Environment-Specific Configuration**: Different configurations for dev, staging, and production can be managed within the factory.
 
-* **Code Review Readiness:** The code should be well-structured and ready for immediate review.
+**Comparison with @Bean:**
 
-Good luck!
+```java
+// Simple @Bean approach
+@Bean
+public RestClient restClient(FrankfurterApiProperties properties) {
+    return RestClient.builder()
+            .baseUrl(properties.getBaseUrl())
+            .build();
+}
+
+// FactoryBean approach (current implementation)
+@Component
+public class RestClientFactoryBean implements FactoryBean<RestClient> {
+    // Provides lifecycle control, type safety, and extensibility
+}
+```
+
+The FactoryBean approach is more enterprise-ready and follows Spring's design philosophy of providing fine-grained control over bean creation.
+
+### 3. Startup Runner Choice: Why ApplicationRunner?
+
+**Question:** Justify the choice of using an `ApplicationRunner` over a simpler `@PostConstruct` method for initial data ingestion.
+
+**Answer:**
+
+`ApplicationRunner` was chosen over `@PostConstruct` for several critical reasons:
+
+#### Application Lifecycle Timing
+
+- **Full Context Initialization**: `ApplicationRunner` executes after the entire Spring application context is fully initialized and all beans are ready.
+- **@PostConstruct Limitation**: `@PostConstruct` runs immediately after a bean's dependencies are injected, but before the full application context is ready.
+- **Dependency Guarantee**: With ApplicationRunner, we're guaranteed that all strategies, the RestClient, and the data store are fully initialized and ready to use.
+
+#### Error Handling and Application Startup
+
+- **Startup Failure Control**: If data initialization fails in ApplicationRunner, the application startup fails gracefully with a clear error message.
+- **@PostConstruct Limitation**: Exceptions in `@PostConstruct` can lead to partially initialized beans and unclear error states.
+- **Production Safety**: In production, we want the application to fail fast if critical data cannot be loaded, rather than starting in a broken state.
+
+#### Access to Application Arguments
+
+- **Command-Line Arguments**: ApplicationRunner provides access to parsed application arguments via `ApplicationArguments`.
+- **Future Extensibility**: This allows for future features like:
+  - `--skip-data-init` flag for testing
+  - `--data-source=mock` for development
+  - Custom initialization parameters
+
+#### Separation of Concerns
+
+- **Clear Intent**: ApplicationRunner clearly signals "this is startup initialization logic" rather than "this is bean initialization logic".
+- **Testability**: ApplicationRunner implementations are easier to test in isolation because they're separate components.
+- **Multiple Runners**: Spring allows multiple ApplicationRunners with `@Order` annotations, enabling complex startup sequences.
+
+#### Production Readiness
+
+- **Logging and Monitoring**: ApplicationRunner execution is logged by Spring, making it easier to monitor startup times and failures.
+- **Health Checks**: The application's readiness probe can check if ApplicationRunners have completed successfully.
+- **Graceful Degradation**: In advanced scenarios, we could implement fallback logic if external API is unavailable at startup.
+
+**Comparison:**
+
+```java
+// @PostConstruct approach (NOT recommended for this use case)
+@PostConstruct
+public void init() {
+    // Runs during bean initialization
+    // No guarantee other beans are ready
+    // Limited error handling
+    // No access to application arguments
+}
+
+// ApplicationRunner approach (current implementation)
+@Component
+public class DataInitializationRunner implements ApplicationRunner {
+    @Override
+    public void run(ApplicationArguments args) {
+        // Runs after full context initialization
+        // All beans guaranteed to be ready
+        // Proper startup failure handling
+        // Access to application arguments
+    }
+}
+```
+
+The ApplicationRunner approach aligns with Spring Boot's best practices for startup tasks and provides better control, error handling, and production readiness.
+
+---
+
+## 📄 License
+
+This project is created as a take-home test for Allo Bank backend developer position.
+
+## 👤 Author
+
+**GitHub Username:** fahri-allobank
+
+---
+
+## 🙏 Acknowledgments
+
+- [Frankfurter API](https://www.frankfurter.app/) - Free and open-source currency exchange rate API
+- Spring Boot Team - For the excellent framework and documentation
