@@ -19,7 +19,6 @@ import static com.fahri_allobank.Frankfurter.config.Constants.*;
 public class LatestIDRRatesFetcher implements IDRDataFetcher {
 
     private static final Logger logger = LoggerFactory.getLogger(LatestIDRRatesFetcher.class);
-    private static final String RESOURCE_TYPE = "latest_idr_rates";
 
     private final RestClient restClient;
     private final SpreadCalculator spreadCalculator;
@@ -57,6 +56,6 @@ public class LatestIDRRatesFetcher implements IDRDataFetcher {
 
     @Override
     public String getResourceType() {
-        return RESOURCE_TYPE;
+        return ResourceType.LATEST_IDR_RATES;
     }
 }

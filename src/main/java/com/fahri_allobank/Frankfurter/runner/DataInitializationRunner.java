@@ -42,7 +42,6 @@ public class DataInitializationRunner implements ApplicationRunner {
         logger.info("Starting data initialization from Frankfurter API...");
 
         try {
-            // Fetch data from all strategies
             for (IDRDataFetcher fetcher : dataFetchers) {
                 String resourceType = fetcher.getResourceType();
                 logger.info("Fetching data for resource type: {}", resourceType);
@@ -53,7 +52,6 @@ public class DataInitializationRunner implements ApplicationRunner {
                 logger.info("Successfully stored data for resource type: {}", resourceType);
             }
 
-            // Mark the data store as initialized (immutable)
             dataStore.markAsInitialized();
 
             logger.info("Data initialization completed successfully. Store is now immutable.");

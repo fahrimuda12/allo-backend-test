@@ -14,24 +14,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ErrorResponse {
-    
-    /**
-
-     */
     private int status;
-    
-    /**
-
-     */
     private String message;
-    
-    /**
-
-     */
     private String details;
 }
-
-
-    
-
-    

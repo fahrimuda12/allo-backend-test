@@ -8,6 +8,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import static com.fahri_allobank.Frankfurter.config.Constants.*;
+
 /**
  * Strategy implementation for fetching historical IDR to USD exchange rates.
  */
@@ -15,7 +17,6 @@ import org.springframework.web.client.RestClient;
 public class HistoricalIDRUSDFetcher implements IDRDataFetcher {
 
     private static final Logger logger = LoggerFactory.getLogger(HistoricalIDRUSDFetcher.class);
-    private static final String RESOURCE_TYPE = "historical_idr_usd";
 
     private final RestClient restClient;
 
@@ -43,6 +44,6 @@ public class HistoricalIDRUSDFetcher implements IDRDataFetcher {
 
     @Override
     public String getResourceType() {
-        return RESOURCE_TYPE;
+        return ResourceType.HISTORICAL_IDR_USD;
     }
 }

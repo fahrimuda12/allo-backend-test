@@ -10,6 +10,8 @@ import org.springframework.web.client.RestClient;
 
 import java.util.Map;
 
+import static com.fahri_allobank.Frankfurter.config.Constants.*;
+
 /**
  * Strategy implementation for fetching the list of supported currencies.
  */
@@ -17,7 +19,6 @@ import java.util.Map;
 public class SupportedCurrenciesFetcher implements IDRDataFetcher {
 
     private static final Logger logger = LoggerFactory.getLogger(SupportedCurrenciesFetcher.class);
-    private static final String RESOURCE_TYPE = "supported_currencies";
 
     private final RestClient restClient;
 
@@ -49,6 +50,6 @@ public class SupportedCurrenciesFetcher implements IDRDataFetcher {
 
     @Override
     public String getResourceType() {
-        return RESOURCE_TYPE;
+        return ResourceType.SUPPORTED_CURRENCIES;
     }
 }
