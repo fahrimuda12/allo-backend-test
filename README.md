@@ -55,20 +55,21 @@ src/
 │   │   │   └── RestClientFactoryBean.java
 │   │   ├── controller/          # REST controllers
 │   │   │   └── FinanceController.java
-│   │   ├── model/               # DTOs
+│   │   ├── dto/                 # Data Transfer Objects
 │   │   │   ├── LatestRatesResponse.java
 │   │   │   ├── HistoricalRatesResponse.java
 │   │   │   └── SupportedCurrenciesResponse.java
 │   │   ├── runner/              # Startup runners
 │   │   │   └── DataInitializationRunner.java
-│   │   ├── service/             # Business logic
+│   │   ├── services/            # Business logic
 │   │   │   ├── FinanceDataService.java
 │   │   │   └── FinanceDataStore.java
 │   │   ├── strategy/            # Strategy pattern implementations
-│   │   │   ├── IDRDataFetcher.java
-│   │   │   ├── LatestIDRRatesFetcher.java
-│   │   │   ├── HistoricalIDRUSDFetcher.java
-│   │   │   └── SupportedCurrenciesFetcher.java
+│   │   │   ├── IDRDataFetcher.java (interface)
+│   │   │   └── impl/
+│   │   │       ├── LatestIDRRatesFetcher.java
+│   │   │       ├── HistoricalIDRUSDFetcher.java
+│   │   │       └── SupportedCurrenciesFetcher.java
 │   │   ├── util/                # Utility classes
 │   │   │   └── SpreadCalculator.java
 │   │   └── FrankfurterApplication.java
@@ -292,40 +293,49 @@ curl -X GET http://localhost:8080/api/finance/data/invalid_resource
 
 ### Test Coverage
 
-The project includes:
+The project includes comprehensive test coverage with **18 total tests**:
 
 - **Unit Tests** for all strategy implementations
 
-  - `LatestIDRRatesFetcherTest` - Tests latest rates fetching and spread calculation
-  - `HistoricalIDRUSDFetcherTest` - Tests historical data fetching
-  - `SupportedCurrenciesFetcherTest` - Tests currency list fetching
-  - `SpreadCalculatorTest` - Tests spread factor calculation logic
+  - `LatestIDRRatesFetcherTest` - 3 tests for latest rates fetching and spread calculation
+  - `HistoricalIDRUSDFetcherTest` - 2 tests for historical data fetching
+  - `SupportedCurrenciesFetcherTest` - 2 tests for currency list fetching
+  - `SpreadCalculatorTest` - 3 tests for spread factor calculation logic
 
 - **Integration Tests**
-  - `DataInitializationRunnerIntegrationTest` - Verifies startup data loading
-  - `FinanceControllerIntegrationTest` - End-to-end API testing
+  - `FrankfurterApplicationTests` - 1 test for application context loading
+  - `DataInitializationRunnerIntegrationTest` - 3 tests verifying startup data loading
+  - `FinanceControllerIntegrationTest` - 4 tests for end-to-end API testing
+
+**Latest Test Results:**
+
+```
+Tests run: 18, Failures: 0, Errors: 0, Skipped: 0
+BUILD SUCCESS
+Total time: 4.105 s
+```
 
 ## 🔐 Personalization Details
 
 ### GitHub Username
 
 ```
-fahri-allobank
+fahrimuda12
 ```
 
 ### Spread Factor Calculation
 
 The spread factor is calculated using the following algorithm:
 
-1. Convert GitHub username to lowercase: `"fahri-allobank"`
+1. Convert GitHub username to lowercase: `"fahrimuda12"`
 2. Calculate sum of Unicode values of all characters:
-   - f(102) + a(97) + h(104) + r(114) + i(105) + -(45) + a(97) + l(108) + l(108) + o(111) + b(98) + a(97) + n(110) + k(107) = 1403
-3. Apply formula: `(1403 % 1000) / 100000.0 = 403 / 100000.0 = 0.00403`
+   - f(102) + a(97) + h(104) + r(114) + i(105) + m(109) + u(117) + d(100) + a(97) + 1(49) + 2(50) = 1044
+3. Apply formula: `(1044 % 1000) / 100000.0 = 44 / 100000.0 = 0.00044`
 
 ### Calculated Spread Factor
 
 ```
-0.00403
+0.00044
 ```
 
 ### USD Buy Spread Formula
@@ -337,9 +347,9 @@ USD_BuySpread_IDR = (1 / Rate_USD) * (1 + Spread Factor)
 **Example Calculation:**
 
 - If `Rate_USD = 0.000063` (from API when base=IDR)
-- `USD_BuySpread_IDR = (1 / 0.000063) * (1 + 0.00403)`
-- `USD_BuySpread_IDR = 15873.015873 * 1.00403`
-- `USD_BuySpread_IDR ≈ 15937.01`
+- `USD_BuySpread_IDR = (1 / 0.000063) * (1 + 0.00044)`
+- `USD_BuySpread_IDR = 15873.015873 * 1.00044`
+- `USD_BuySpread_IDR ≈ 15880.00`
 
 This represents the Rupiah selling rate to USD after applying the banking spread/margin.
 
@@ -510,7 +520,7 @@ This project is created as a take-home test for Allo Bank backend developer posi
 
 ## 👤 Author
 
-**GitHub Username:** fahri-allobank
+**GitHub Username:** fahrimuda12
 
 ---
 
