@@ -1,10 +1,10 @@
 package com.fahri_allobank.Frankfurter.controller;
 
+import com.fahri_allobank.Frankfurter.dto.SuccessResponse;
 import com.fahri_allobank.Frankfurter.services.FinanceService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,30 +31,16 @@ public class FinanceController {
      * - supported_currencies: List of all supported currencies
      * 
      * @param resourceType The type of resource to retrieve
-     * @return ResponseEntity containing the requested data
+     * @return ResponseEntity containing the requested data wrapped in
+     *         SuccessResponse
      */
     @GetMapping("/data/{resourceType}")
-    public ResponseEntity<Object> getFinanceData(@PathVariable String resourceType) {
+    public ResponseEntity<SuccessResponse<Object>> getFinanceData(@PathVariable String resourceType) {
         logger.info("Received request for resource type: {}", resourceType);
 
-        try {
-            Object data = financeService.getDataByResourceType(resourceType);
-            logger.info("Successfully retrieved data for resource type: {}", resourceType);
-            return ResponseEntity.ok(data);
-        } catch (IllegalArgumentException e) {
-            logger.warn("Invalid resource type requested: {}", resourceType);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ErrorResponse("Invalid resource type: " + resourceType));
-        } catch (Exception e) {
-            logger.error("Error retrieving data for resource type: {}", resourceType, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ErrorResponse("Internal server error: " + e.getMessage()));
-        }
-    }
+        Object data = financeService.getDataByResourceType(resourceType);
+        logger.info("Successfully retrieved data for resource type: {}", resourceType);
 
-    /**
-     * Simple error response DTO
-     */
-    private record ErrorResponse(String error) {
+        return ResponseEntity.ok(SuccessResponse.of(data, "Data retrieved successfully"));
     }
 }

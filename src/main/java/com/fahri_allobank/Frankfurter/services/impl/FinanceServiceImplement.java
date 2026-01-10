@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import com.fahri_allobank.Frankfurter.exception.CustomBadRequestException;
 import com.fahri_allobank.Frankfurter.services.FinanceService;
 import com.fahri_allobank.Frankfurter.services.FinanceDataStore;
 import com.fahri_allobank.Frankfurter.strategy.IDRDataFetcher;
@@ -27,7 +28,9 @@ public class FinanceServiceImplement implements FinanceService {
 
     public Object getDataByResourceType(String resourceType) {
         if (!strategyMap.containsKey(resourceType)) {
-            throw new IllegalArgumentException("Unsupported resource type: " + resourceType);
+            throw new CustomBadRequestException(
+                    "Invalid resource type: " + resourceType + ". " +
+                            "Supported types: latest_idr_rates, historical_idr_usd, supported_currencies");
         }
 
         Object data = dataStore.getData(resourceType);
